@@ -38,7 +38,11 @@ EXTRA_INCDIR    = include
 LIBS		= c gcc hal pp phy net80211 lwip wpa main
 
 # compiler flags using during compilation of source files
-CFLAGS		= -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH
+ATSCFLAGS	= -std=c99 -D_XOPEN_SOURCE
+ATSCFLAGS	+= -D_ATSTYPE_VAR_SIZE_=0X000F -D_ATS_CCOMP_EXCEPTION_NONE_ -D_ATS_CCOMP_RUNTIME_NONE_
+ATSCFLAGS	+= -Wno-unused-variable -Wno-unused-label -Wno-unused-but-set-variable -Wno-implicit-function-declaration
+ATSCFLAGS	+= -I${PATSHOME} -I${PATSHOME}/ccomp/runtime
+CFLAGS		= -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH $(ATSCFLAGS)
 
 # linker flags used to generate the main object file
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static
@@ -60,7 +64,7 @@ FW_FILE_2_ADDR	= 0x40000
 CC		:= $(XTENSA_TOOLS_ROOT)/xtensa-lx106-elf-gcc
 AR		:= $(XTENSA_TOOLS_ROOT)/xtensa-lx106-elf-ar
 LD		:= $(XTENSA_TOOLS_ROOT)/xtensa-lx106-elf-gcc
-
+ATS		:= patsopt
 
 
 ####
@@ -72,8 +76,8 @@ BUILD_DIR	:= $(addprefix $(BUILD_BASE)/,$(MODULES))
 SDK_LIBDIR	:= $(addprefix $(SDK_BASE)/,$(SDK_LIBDIR))
 SDK_INCDIR	:= $(addprefix -I$(SDK_BASE)/,$(SDK_INCDIR))
 
-SRC		:= $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.c))
-OBJ		:= $(patsubst %.c,$(BUILD_BASE)/%.o,$(SRC))
+SRC		:= $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.dats))
+OBJ		:= $(patsubst %.dats,$(BUILD_BASE)/%_dats.o,$(SRC))
 LIBS		:= $(addprefix -l,$(LIBS))
 APP_AR		:= $(addprefix $(BUILD_BASE)/,$(TARGET)_app.a)
 TARGET_OUT	:= $(addprefix $(BUILD_BASE)/,$(TARGET).out)
@@ -96,10 +100,15 @@ Q := @
 vecho := @echo
 endif
 
-vpath %.c $(SRC_DIR)
+vpath %.dats $(SRC_DIR)
 
 define compile-objects
-$1/%.o: %.c
+$1/%_dats.c: %.dats
+	$(vecho) "ATS $$<"
+	$(Q) $(ATS) -o $$@.tmp -d $$<
+	$(Q) cp $$@.tmp $$@
+
+$1/%_dats.o: $1/%_dats.c
 	$(vecho) "CC $$<"
 	$(Q) $(CC) $(INCDIR) $(MODULE_INCDIR) $(EXTRA_INCDIR) $(SDK_INCDIR) $(CFLAGS) -c $$< -o $$@
 endef

@@ -1,3 +1,6 @@
+#include "../config.hats"
+
+%{$
 #include "ets_sys.h"
 #include "osapi.h"
 #include "gpio.h"
@@ -62,3 +65,4 @@ user_init()
     //Start os task
     system_os_task(user_procTask, user_procTaskPrio,user_procTaskQueue, user_procTaskQueueLen);
 }
+%}
