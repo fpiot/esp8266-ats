@@ -5,6 +5,7 @@
 #include "osapi.h"
 #include "gpio.h"
 #include "os_type.h"
+#include "user_interface.h"
 #include "user_config.h"
 
 #define user_procTaskPrio        0
@@ -17,6 +18,7 @@ static volatile os_timer_t some_timer;
 
 void some_timerfunc(void *arg)
 {
+    os_printf("some_timerfunc() called.\n");
     //Do blinky stuff
     if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & BIT2)
     {
@@ -34,6 +36,7 @@ void some_timerfunc(void *arg)
 static void ICACHE_FLASH_ATTR
 user_procTask(os_event_t *events)
 {
+    os_printf("user_procTask() called.\n");
     os_delay_us(10);
 }
 
@@ -41,6 +44,10 @@ user_procTask(os_event_t *events)
 void ICACHE_FLASH_ATTR
 user_init()
 {
+    uart_div_modify(0, UART_CLK_FREQ / 115200);
+    os_printf("\nuser_init() start.\n");
+    wifi_set_opmode_current(NULL_MODE);
+
     // Initialize the GPIO subsystem.
     gpio_init();
 
