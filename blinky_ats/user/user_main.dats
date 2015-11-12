@@ -1,4 +1,8 @@
 #include "../config.hats"
+#include "{$ESP8266}/ESP8266_PRELUDE/kernel_staload.hats"
+
+extern fun printf_string (x:string): void = "mac#"
+implement printf_string (x) = println! x
 
 %{$
 #include "ets_sys.h"
@@ -18,7 +22,7 @@ static volatile os_timer_t some_timer;
 
 void some_timerfunc(void *arg)
 {
-    os_printf("some_timerfunc() called.\n");
+    printf_string("some_timerfunc() called.");
     //Do blinky stuff
     if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & BIT2)
     {
@@ -36,7 +40,7 @@ void some_timerfunc(void *arg)
 static void ICACHE_FLASH_ATTR
 user_procTask(os_event_t *events)
 {
-    os_printf("user_procTask() called.\n");
+    printf_string("user_procTask() called.");
     os_delay_us(10);
 }
 
@@ -45,7 +49,7 @@ void ICACHE_FLASH_ATTR
 user_init()
 {
     uart_div_modify(0, UART_CLK_FREQ / 115200);
-    os_printf("\nuser_init() start.\n");
+    printf_string("\nuser_init() start.");
     wifi_set_opmode_current(NULL_MODE);
 
     // Initialize the GPIO subsystem.

@@ -39,9 +39,9 @@ LIBS		= c gcc hal pp phy net80211 lwip wpa main
 
 # compiler flags using during compilation of source files
 ATSCFLAGS	= -std=c99 -D_XOPEN_SOURCE
-ATSCFLAGS	+= -D_ATSTYPE_VAR_SIZE_=0X000F -D_ATS_CCOMP_EXCEPTION_NONE_ -D_ATS_CCOMP_RUNTIME_NONE_
+ATSCFLAGS	+= -D_ATSTYPE_VAR_SIZE_=0X000F -D_ATS_CCOMP_EXCEPTION_NONE_ -D_ATS_CCOMP_RUNTIME_NONE_ -D_ATS_CCOMP_PRELUDE_NONE_ -D_ATS_CCOMP_PRELUDE_USER_=\"../../ESP8266_PRELUDE/kernel_prelude.cats\"
 ATSCFLAGS	+= -Wno-unused-variable -Wno-unused-label -Wno-unused-but-set-variable -Wno-implicit-function-declaration
-ATSCFLAGS	+= -I${PATSHOME} -I${PATSHOME}/ccomp/runtime
+ATSCFLAGS	+= -I${PATSHOME} -I${PATSHOME}/ccomp/runtime -I..
 CFLAGS		= -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH $(ATSCFLAGS)
 
 # linker flags used to generate the main object file
