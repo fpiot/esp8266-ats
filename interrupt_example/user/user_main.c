@@ -38,7 +38,7 @@ void ICACHE_FLASH_ATTR  user_init()
 {
 
 // Initialize UART0 to use as debug
-    uart_div_modify(0, UART_CLK_FREQ / 9600);
+    uart_div_modify(0, UART_CLK_FREQ / 115200);
 
     os_printf(
                 "GPIO Interrupt ESP8266 test\r\n"
@@ -86,7 +86,7 @@ void ICACHE_FLASH_ATTR  user_init()
 //  PIN_PULLDWN_EN(PIN_NAME)
 
     PIN_PULLUP_DIS(PERIPHS_IO_MUX_GPIO0_U);
-    PIN_PULLDWN_DIS(PERIPHS_IO_MUX_GPIO0_U);
+//  PIN_PULLDWN_DIS(PERIPHS_IO_MUX_GPIO0_U);
     PIN_PULLUP_EN(PERIPHS_IO_MUX_GPIO2_U);
 
 //
@@ -130,7 +130,7 @@ void ICACHE_FLASH_ATTR  user_init()
 // enable interrupt for his GPIO
 //     GPIO_PIN_INTR_... defined in gpio.h
 
-     gpio_pin_intr_state_set(GPIO_ID_PIN(0), GPIO_PIN_INTR_ANYEGDE);
+     gpio_pin_intr_state_set(GPIO_ID_PIN(0), GPIO_PIN_INTR_ANYEDGE);
 
      ETS_GPIO_INTR_ENABLE();
 
@@ -162,7 +162,7 @@ LOCAL void  gpio_intr_handler(int * dummy)
         GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, gpio_status & BIT(0));
 
 // Reactivate interrupts for GPIO0
-        gpio_pin_intr_state_set(GPIO_ID_PIN(0), GPIO_PIN_INTR_ANYEGDE);
+        gpio_pin_intr_state_set(GPIO_ID_PIN(0), GPIO_PIN_INTR_ANYEDGE);
     }
 }
 
