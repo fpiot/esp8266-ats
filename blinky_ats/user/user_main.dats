@@ -1,7 +1,7 @@
 #include "../config.hats"
-#include "{$ESP8266}/ESP8266_PRELUDE/kernel_staload.hats"
 staload "{$ESP8266}/SATS/osapi.sats"
 staload "{$ESP8266}/SATS/gpio.sats"
+staload "{$ESP8266}/SATS/user_interface.sats"
 staload UN = "prelude/SATS/unsafe.sats"
 
 extern fun printf_string (x:string): void = "mac#"
@@ -9,6 +9,9 @@ implement printf_string (x) = println! x
 
 extern fun user_init_ats (): void = "mac#"
 implement user_init_ats () = {
+  val () = uart_div_modify(0, UART_CLK_FREQ / 115200)
+  val () = println! "\nuser_init() start."
+  val _  = wifi_set_opmode_current NULL_MODE
   (* Initialize the GPIO subsystem. *)
   val () = gpio_init ()
   (* Set GPIO2 to output mode *)
@@ -31,20 +34,12 @@ implement some_timerfunc (arg) = {
 }
 
 %{$
-#include "os_type.h"
-#include "user_interface.h"
-#include "user_config.h"
-
 static volatile os_timer_t some_timer;
 
 //Init function 
 void ICACHE_FLASH_ATTR
 user_init()
 {
-    uart_div_modify(0, UART_CLK_FREQ / 115200);
-    printf_string("\nuser_init() start.");
-    wifi_set_opmode_current(NULL_MODE);
-
     user_init_ats();
 
     //Disarm timer
