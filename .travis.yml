@@ -1,0 +1,52 @@
+language: c
+sudo: false
+env:
+  # Target commit for https://github.com/pfalcon/esp-open-sdk/
+  OPENSDK_COMMIT=b44afa47
+  CROSS_ROOT="${HOME}/toolchain-${OPENSDK_COMMIT}"
+  CROSS_BINDIR="${CROSS_ROOT}/bin"
+  PATH=${PATH}:${CROSS_BINDIR}
+cache:
+  directories:
+    - ${CROSS_ROOT}
+    - ${HOME}/.ccache
+addons:
+  apt:
+    packages:
+    - make
+    - unrar
+    - autoconf
+    - automake
+    - libtool
+    - gcc
+    - g++
+    - gperf
+    - flex
+    - bison
+    - texinfo
+    - gawk
+    - libncurses5-dev
+    - libexpat1-dev
+    - python
+    - python-serial
+    - sed
+    - git
+
+before_install:
+  # Install a toolchain using esp-open-sdk (parts we need for this are the GNU toolchain and libhal)
+  #
+  # Adds hack of "{$HAS_TC} || -Buildstep-" to avoid rebuilding toolchain if it's already
+  # installed from the cache. If this gets any more complex it should be spun out to a standalone shell script.
+  - export HAS_TC="test -d ${CROSS_BINDIR}"
+  - unset CC # Travis sets this due to "language: c", but it confuses autotools configure when cross-building
+  - ${HAS_TC} || git clone --recursive https://github.com/pfalcon/esp-open-sdk.git
+  - ${HAS_TC} || cd esp-open-sdk
+  - ${HAS_TC} || git reset --hard ${OPENSDK_COMMIT}
+  - ${HAS_TC} || git submodule update
+  - ${HAS_TC} || sed -i "s/2.69/2.68/" lx106-hal/configure.ac # this is a nasty hack as Ubuntu Precise only has autoconf 2.68 not 2.69...
+  - ${HAS_TC} || sed -r -i 's%TOOLCHAIN ?=.*%TOOLCHAIN=${CROSS_ROOT}%' Makefile
+  - ${HAS_TC} || make STANDALONE=n
+
+script:
+  - cd ${TRAVIS_BUILD_DIR}
+  - make
