@@ -22,8 +22,8 @@ implement some_timerfunc (arg) = {
              gpio_output_set (BIT2, 0U, BIT2, 0U)
 }
 
-extern fun user_init_ats (): void = "mac#"
-implement user_init_ats () = {
+extern fun user_init (): void = "mac#"
+implement user_init () = {
   val () = uart_div_modify(0, UART_CLK_FREQ / 115200)
   val () = println! "\nuser_init() start."
   val _  = wifi_set_opmode_current NULL_MODE
@@ -43,12 +43,3 @@ implement user_init_ats () = {
      0 for once and 1 for repeating *)
   val () = os_timer_arm (some_timer_p, 1000U, true)
 }
-
-%{$
-//Init function 
-void ICACHE_FLASH_ATTR
-user_init()
-{
-    user_init_ats();
-}
-%}
