@@ -5,6 +5,8 @@ env:
   OPENSDK_COMMIT=2df0123d9f201ff3351139cb2912f748ec74caf1
   CROSS_ROOT="${HOME}/toolchain-${OPENSDK_COMMIT}"
   CROSS_BINDIR="${CROSS_ROOT}/bin"
+  XTENSA_TOOLS_ROOT="${CROSS_BINDIR}"
+  SDK_BASE="${CROSS_ROOT}/sdk"
   PATH=${PATH}:${CROSS_BINDIR}
 cache:
   directories:
@@ -46,6 +48,7 @@ before_install:
   - ${HAS_TC} || sed -i "s/2.69/2.68/" lx106-hal/configure.ac # this is a nasty hack as Ubuntu Precise only has autoconf 2.68 not 2.69...
   - ${HAS_TC} || sed -r -i 's%TOOLCHAIN ?=.*%TOOLCHAIN=${CROSS_ROOT}%' Makefile
   - ${HAS_TC} || make STANDALONE=n
+  - ${HAS_TC} || mv *sdk* ${CROSS_ROOT}/
 
 script:
   - cd ${TRAVIS_BUILD_DIR}
