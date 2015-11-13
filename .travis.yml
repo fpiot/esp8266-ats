@@ -2,7 +2,7 @@ language: c
 sudo: false
 env:
   # Target commit for https://github.com/pfalcon/esp-open-sdk/
-  OPENSDK_COMMIT=b64eebdbb0c8bcbd3961fd2751653a1ae87a559b
+  OPENSDK_COMMIT=2df0123d9f201ff3351139cb2912f748ec74caf1
   CROSS_ROOT="${HOME}/toolchain-${OPENSDK_COMMIT}"
   CROSS_BINDIR="${CROSS_ROOT}/bin"
   PATH=${PATH}:${CROSS_BINDIR}
@@ -39,10 +39,9 @@ before_install:
   # installed from the cache. If this gets any more complex it should be spun out to a standalone shell script.
   - export HAS_TC="test -d ${CROSS_BINDIR}"
   - unset CC # Travis sets this due to "language: c", but it confuses autotools configure when cross-building
-  - ${HAS_TC} || git clone https://github.com/pfalcon/esp-open-sdk.git
+  - ${HAS_TC} || git clone --recursive https://github.com/pfalcon/esp-open-sdk.git
   - ${HAS_TC} || cd esp-open-sdk
   - ${HAS_TC} || git reset --hard ${OPENSDK_COMMIT}
-  - ${HAS_TC} || git submodule init
   - ${HAS_TC} || git submodule update
   - ${HAS_TC} || sed -i "s/2.69/2.68/" lx106-hal/configure.ac # this is a nasty hack as Ubuntu Precise only has autoconf 2.68 not 2.69...
   - ${HAS_TC} || sed -r -i 's%TOOLCHAIN ?=.*%TOOLCHAIN=${CROSS_ROOT}%' Makefile
