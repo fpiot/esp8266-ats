@@ -49,6 +49,8 @@ before_install:
   - ${HAS_TC} || sed -r -i 's%TOOLCHAIN ?=.*%TOOLCHAIN=${CROSS_ROOT}%' Makefile
   - ${HAS_TC} || make STANDALONE=n
   - ${HAS_TC} || mv *sdk* ${CROSS_ROOT}/
+  - ls ${CROSS_ROOT}
+  - ls ${CROSS_ROOT}/*
 
 script:
   - cd ${TRAVIS_BUILD_DIR}
