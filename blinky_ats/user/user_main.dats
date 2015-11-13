@@ -1,14 +1,23 @@
 #include "../config.hats"
 #include "{$ESP8266}/ESP8266_PRELUDE/kernel_staload.hats"
 staload "{$ESP8266}/SATS/osapi.sats"
+staload "{$ESP8266}/SATS/gpio.sats"
 staload UN = "prelude/SATS/unsafe.sats"
 
 extern fun printf_string (x:string): void = "mac#"
 implement printf_string (x) = println! x
 
+extern fun user_init_ats (): void = "mac#"
+implement user_init_ats () = {
+  (* Initialize the GPIO subsystem. *)
+  val () = gpio_init ()
+  (* Set GPIO2 to output mode *)
+  val () = PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2)
+  (* Set GPIO2 low *)
+  val () = gpio_output_set($UN.cast{uint32}(0), BIT2, BIT2, $UN.cast{uint32}(0));
+}
+
 %{$
-#include "ets_sys.h"
-#include "gpio.h"
 #include "os_type.h"
 #include "user_interface.h"
 #include "user_config.h"
@@ -40,14 +49,7 @@ user_init()
     printf_string("\nuser_init() start.");
     wifi_set_opmode_current(NULL_MODE);
 
-    // Initialize the GPIO subsystem.
-    gpio_init();
-
-    //Set GPIO2 to output mode
-    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
-
-    //Set GPIO2 low
-    gpio_output_set(0, BIT2, BIT2, 0);
+    user_init_ats();
 
     //Disarm timer
     os_timer_disarm(&some_timer);
