@@ -12,9 +12,22 @@ implement user_init_ats () = {
   (* Initialize the GPIO subsystem. *)
   val () = gpio_init ()
   (* Set GPIO2 to output mode *)
-  val () = PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2)
+  val () = PIN_FUNC_SELECT (PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2)
   (* Set GPIO2 low *)
-  val () = gpio_output_set($UN.cast{uint32}(0), BIT2, BIT2, $UN.cast{uint32}(0));
+  val () = gpio_output_set (0U, BIT2, BIT2, 0U);
+}
+
+extern fun some_timerfunc (arg: ptr): void = "mac#"
+implement some_timerfunc (arg) = {
+  val () = println! "some_timerfunc() called."
+  (* Do blinky stuff *)
+  val v = GPIO_REG_READ(GPIO_OUT_ADDRESS) land BIT2
+  val () = if v != 0 then
+             (* Set GPIO2 to LOW *)
+             gpio_output_set (0U, BIT2, BIT2, 0U)
+           else
+             (* Set GPIO2 to HIGH *)
+             gpio_output_set (BIT2, 0U, BIT2, 0U)
 }
 
 %{$
@@ -23,23 +36,6 @@ implement user_init_ats () = {
 #include "user_config.h"
 
 static volatile os_timer_t some_timer;
-
-
-void some_timerfunc(void *arg)
-{
-    printf_string("some_timerfunc() called.");
-    //Do blinky stuff
-    if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & BIT2)
-    {
-        //Set GPIO2 to LOW
-        gpio_output_set(0, BIT2, BIT2, 0);
-    }
-    else
-    {
-        //Set GPIO2 to HIGH
-        gpio_output_set(BIT2, 0, BIT2, 0);
-    }
-}
 
 //Init function 
 void ICACHE_FLASH_ATTR
