@@ -15,7 +15,7 @@ static void ICACHE_FLASH_ATTR
 loop(os_event_t *events)
 {
     os_printf("Hello\n\r");
-    os_delay_us(10000);
+    os_delay_us(1000000);
     system_os_post(user_procTaskPrio, 0, 0 );
 }
 
@@ -26,6 +26,8 @@ user_init()
     char ssid[32] = SSID;
     char password[64] = SSID_PASSWORD;
     struct station_config stationConf;
+
+    uart_div_modify(0, UART_CLK_FREQ / 115200);
 
     //Set station mode
     wifi_set_opmode( 0x1 );
