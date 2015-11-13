@@ -41,7 +41,7 @@ before_install:
   - unset CC # Travis sets this due to "language: c", but it confuses autotools configure when cross-building
   - ${HAS_TC} || git clone https://github.com/pfalcon/esp-open-sdk.git
   - ${HAS_TC} || cd esp-open-sdk
-  - ${HAS_TC} || git reset --hard ${OPENSDK_COMMIT}
+  # - ${HAS_TC} || git reset --hard ${OPENSDK_COMMIT}
   - ${HAS_TC} || git submodule init
   - ${HAS_TC} || git submodule update
   - ${HAS_TC} || sed -i "s/2.69/2.68/" lx106-hal/configure.ac # this is a nasty hack as Ubuntu Precise only has autoconf 2.68 not 2.69...
