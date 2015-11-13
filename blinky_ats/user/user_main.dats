@@ -1,21 +1,17 @@
 #include "../config.hats"
 #include "{$ESP8266}/ESP8266_PRELUDE/kernel_staload.hats"
+staload "{$ESP8266}/SATS/osapi.sats"
+staload UN = "prelude/SATS/unsafe.sats"
 
 extern fun printf_string (x:string): void = "mac#"
 implement printf_string (x) = println! x
 
 %{$
 #include "ets_sys.h"
-#include "osapi.h"
 #include "gpio.h"
 #include "os_type.h"
 #include "user_interface.h"
 #include "user_config.h"
-
-#define user_procTaskPrio        0
-#define user_procTaskQueueLen    1
-os_event_t    user_procTaskQueue[user_procTaskQueueLen];
-static void user_procTask(os_event_t *events);
 
 static volatile os_timer_t some_timer;
 
@@ -34,14 +30,6 @@ void some_timerfunc(void *arg)
         //Set GPIO2 to HIGH
         gpio_output_set(BIT2, 0, BIT2, 0);
     }
-}
-
-//Do nothing function
-static void ICACHE_FLASH_ATTR
-user_procTask(os_event_t *events)
-{
-    printf_string("user_procTask() called.");
-    os_delay_us(10);
 }
 
 //Init function 
@@ -72,8 +60,5 @@ user_init()
     //1000 is the fire time in ms
     //0 for once and 1 for repeating
     os_timer_arm(&some_timer, 1000, 1);
-    
-    //Start os task
-    system_os_task(user_procTask, user_procTaskPrio,user_procTaskQueue, user_procTaskQueueLen);
 }
 %}
