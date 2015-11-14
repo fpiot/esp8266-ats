@@ -3,8 +3,11 @@
 #include "os_type.h"
 %}
 
-abst@ype os_timer_t = $extype"os_timer_t"
-typedef os_timer_func_t = ptr -> void
+typedef  os_signal_t = uint
+typedef  os_param_t  = uint
+abst@ype os_event_t  = $extype"os_event_t"
+abst@ype os_timer_t  = $extype"os_timer_t"
+typedef  os_timer_func_t = ptr -> void
 
 macdef UART_CLK_FREQ = $extval(int, "UART_CLK_FREQ")
 
