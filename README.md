@@ -12,7 +12,23 @@ You need [some additional board](https://www.switch-science.com/catalog/2500/) t
 
 ## Setup environment
 
+### [Debian GNU/Linux](https://www.debian.org/)
+
+Install some packages.
+
+```
+$ sudo apt-get install make unrar autoconf automake libtool gcc g++ gperf flex bison texinfo gawk libncurses5-dev libexpat1-dev python python-serial sed git
+```
+
 xxx
+
+### Mac OS X
+
+T.B.D.
+
+### Windows
+
+T.B.D.
 
 ## How to build
 
