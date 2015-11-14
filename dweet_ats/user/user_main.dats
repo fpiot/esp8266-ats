@@ -1,3 +1,6 @@
+#include "../config.hats"
+
+%{$
 #include "ets_sys.h"
 #include "osapi.h"
 #include "gpio.h"
@@ -153,4 +156,4 @@ void user_init( void )
     
     wifi_set_event_handler_cb( wifi_callback );
 }
-
+%}
