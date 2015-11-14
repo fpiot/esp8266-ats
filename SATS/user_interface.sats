@@ -33,6 +33,7 @@ macdef STATIONAP_MODE = $extval(uint8, "STATIONAP_MODE")
 
 fun wifi_set_opmode (opmode: uint8): bool = "mac#"
 fun wifi_set_opmode_current (opmode: uint8): bool = "mac#"
+fun wifi_station_disconnect (): bool = "mac#"
 
 fun wifi_station_setup (): bool = "mac#"
 fun wifi_station_set_hostname (name: string): bool = "mac#"
