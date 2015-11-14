@@ -6,6 +6,22 @@ staload UN = "prelude/SATS/unsafe.sats"
 #define user_procTaskPrio 0
 
 %{
+static void wifi_setup(void);
+static void
+wifi_setup()
+{
+  char ssid[32] = SSID;
+  char password[64] = SSID_PASSWORD;
+  struct station_config stationConf;
+
+  /* Set ap settings */
+  os_memcpy(&stationConf.ssid, ssid, 32);
+  os_memcpy(&stationConf.password, password, 64);
+  wifi_station_set_config(&stationConf);
+}
+%}
+
+%{
 #define user_procTaskQueueLen 1
 os_event_t user_procTaskQueue[user_procTaskQueueLen];
 %}
@@ -15,7 +31,7 @@ macdef user_procTaskQueueLen = $extval(uint8, "user_procTaskQueueLen")
 extern fun loop (events: cPtr0(os_event_t)): void = "mac#"
 implement loop (events) = {
   val () = println! "Hello"
-  val () = os_delay_us($UN.cast{uint16}(100000000))
+  val () = os_delay_us(10000U)
   val _  = system_os_post($UN.cast{uint8}(user_procTaskPrio), 0U, 0U)
 }
 
@@ -38,17 +54,8 @@ implement user_init_ats2 () = {
 void ICACHE_FLASH_ATTR
 user_init()
 {
-    char ssid[32] = SSID;
-    char password[64] = SSID_PASSWORD;
-    struct station_config stationConf;
-
     user_init_ats1();
-
-    //Set ap settings
-    os_memcpy(&stationConf.ssid, ssid, 32);
-    os_memcpy(&stationConf.password, password, 64);
-    wifi_station_set_config(&stationConf);
-
+    wifi_setup();
     user_init_ats2();
 }
 %}
