@@ -1,4 +1,23 @@
 #include "../config.hats"
+staload "{$ESP8266}/SATS/user_interface.sats"
+
+extern fun wifi_setup (): void = "mac#"
+%{
+static void wifi_setup(void);
+static void
+wifi_setup()
+{
+  char ssid[32] = SSID;
+  char password[64] = SSID_PASSWORD;
+  struct station_config stationConf;
+
+  /* Set ap settings */
+  stationConf.bssid_set = 0;
+  os_memcpy(&stationConf.ssid, ssid, 32);
+  os_memcpy(&stationConf.password, password, 64);
+  wifi_station_set_config(&stationConf);
+}
+%}
 
 %{$
 #include "ets_sys.h"
@@ -149,10 +168,7 @@ void user_init( void )
 
     gpio_init();
     
-    config.bssid_set = 0;
-    os_memcpy( &config.ssid, "AndiceLabs", 32 );
-    os_memcpy( &config.password, "password", 64 );
-    wifi_station_set_config( &config );
+    wifi_setup();
     
     wifi_set_event_handler_cb( wifi_callback );
 }
