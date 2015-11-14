@@ -17,3 +17,29 @@ macdef STATIONAP_MODE = $extval(uint8, "STATIONAP_MODE")
 
 fun wifi_set_opmode (opmode: uint8): bool = "mac#"
 fun wifi_set_opmode_current (opmode: uint8): bool = "mac#"
+
+fun wifi_station_setup (): bool = "mac#"
+
+%{#
+ATSinline()
+atstype_bool
+wifi_station_setup(atsvoid_t0ype)
+{
+  char ssid[32] = SSID;
+  char password[64] = SSID_PASSWORD;
+  struct station_config stationConf;
+
+  /* Set ap settings */
+  stationConf.bssid_set = 0;
+  os_memcpy(&stationConf.ssid, ssid, 32);
+  os_memcpy(&stationConf.password, password, 64);
+  return wifi_station_set_config(&stationConf);
+}
+%}
+
+fun wifi_station_set_hostname (name: string): bool = "mac#"
+
+abst@ype System_Event_t = $extype"System_Event_t"
+typedef wifi_event_handler_cb_t = cPtr0(System_Event_t) -> void
+
+fun wifi_set_event_handler_cb (cb: wifi_event_handler_cb_t): void = "mac#"

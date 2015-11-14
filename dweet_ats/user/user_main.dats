@@ -1,33 +1,15 @@
 #include "../config.hats"
+staload "{$ESP8266}/SATS/osapi.sats"
 staload "{$ESP8266}/SATS/user_interface.sats"
 
-extern fun wifi_setup (): void = "mac#"
+extern fun user_rf_pre_init (): void = "mac#"
+implement user_rf_pre_init () = ()
+
+extern fun wifi_callback: wifi_event_handler_cb_t = "mac#"
+
 %{
-static void wifi_setup(void);
-static void
-wifi_setup()
-{
-  char ssid[32] = SSID;
-  char password[64] = SSID_PASSWORD;
-  struct station_config stationConf;
-
-  /* Set ap settings */
-  stationConf.bssid_set = 0;
-  os_memcpy(&stationConf.ssid, ssid, 32);
-  os_memcpy(&stationConf.password, password, 64);
-  wifi_station_set_config(&stationConf);
-}
-%}
-
-%{$
-#include "ets_sys.h"
-#include "osapi.h"
-#include "gpio.h"
-#include "os_type.h"
 #include "ip_addr.h"
 #include "espconn.h"
-#include "user_interface.h"
-#include "user_config.h"
 
 
 struct espconn dweet_conn;
@@ -38,11 +20,6 @@ char dweet_host[] = "dweet.io";
 char dweet_path[] = "/dweet/for/eccd882c-33d0-11e5-96b7-10bf4884d1f9";
 char json_data[ 256 ];
 char buffer[ 2048 ];
-
-
-void user_rf_pre_init( void )
-{
-}
 
 
 void data_received( void *arg, char *pdata, unsigned short len )
@@ -154,22 +131,16 @@ void wifi_callback( System_Event_t *evt )
         }
     }
 }
-
-
-void user_init( void )
-{
-    static struct station_config config;
-    
-    uart_div_modify( 0, UART_CLK_FREQ / ( 115200 ) );
-    os_printf( "%s\n", __FUNCTION__ );
-
-    wifi_station_set_hostname( "dweet" );
-    wifi_set_opmode_current( STATION_MODE );
-
-    gpio_init();
-    
-    wifi_setup();
-    
-    wifi_set_event_handler_cb( wifi_callback );
-}
 %}
+
+extern fun user_init (): void = "mac#"
+implement user_init () = {
+  val () = uart_div_modify (0, UART_CLK_FREQ / 115200)
+  val () = println! "user_init()"
+
+  val _  = wifi_station_set_hostname "dweet"
+  val _  = wifi_set_opmode_current STATION_MODE
+
+  val _  = wifi_station_setup ()
+  val () = wifi_set_event_handler_cb wifi_callback
+}
