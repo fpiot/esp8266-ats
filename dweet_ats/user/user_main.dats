@@ -5,6 +5,7 @@ staload "{$ESP8266}/SATS/espconn.sats"
 staload UN = "prelude/SATS/unsafe.sats"
 
 %{^
+void dns_done_c( const char *name, ip_addr_t *ipaddr, void *arg );
 void wifi_callback_c( System_Event_t *evt );
 %}
 
@@ -22,6 +23,13 @@ extern fun tcp_disconnected: espconn_connect_callback_t = "mac#"
 implement tcp_disconnected (arg) = {
   val () = println! "tcp_disconnected()"
   val _  = wifi_station_disconnect()
+}
+
+extern fun dns_done_c: dns_found_callback_t = "mac#"
+extern fun dns_done: dns_found_callback_t = "mac#"
+implement dns_done (pfat | name, ipaddr, arg) = {
+  val () = println! "dns_done()"
+  val () = dns_done_c (pfat | name, ipaddr, arg)
 }
 
 extern fun wifi_callback_c: wifi_event_handler_cb_t = "mac#"
@@ -67,11 +75,9 @@ void tcp_connected( void *arg )
 }
 
 
-void dns_done( const char *name, ip_addr_t *ipaddr, void *arg )
+void dns_done_c( const char *name, ip_addr_t *ipaddr, void *arg )
 {
     struct espconn *conn = arg;
-    
-    os_printf( "%s\n", __FUNCTION__ );
     
     if ( ipaddr == NULL) 
     {
@@ -130,7 +136,7 @@ void wifi_callback_c( System_Event_t *evt )
                         IP2STR(&evt->event_info.got_ip.gw));
             os_printf("\n");
             
-            espconn_gethostbyname( &dweet_conn, dweet_host, &dweet_ip, dns_done );
+            espconn_gethostbyname( &dweet_conn, dweet_host, &dweet_ip, (dns_found_callback) dns_done );
             break;
         }
         
