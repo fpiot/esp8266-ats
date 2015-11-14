@@ -5,26 +5,28 @@ staload UN = "prelude/SATS/unsafe.sats"
 
 #define user_procTaskPrio 0
 
-extern fun loop_ats (events: cPtr0(os_event_t)): void = "mac#"
-implement loop_ats (events) = {
+%{
+#define user_procTaskQueueLen 1
+os_event_t user_procTaskQueue[user_procTaskQueueLen];
+%}
+macdef user_procTaskQueue = $extval(cPtr1(os_event_t), "(user_procTaskQueue)")
+macdef user_procTaskQueueLen = $extval(uint8, "user_procTaskQueueLen")
+
+extern fun loop (events: cPtr0(os_event_t)): void = "mac#"
+implement loop (events) = {
   val () = println! "Hello"
-  val () = os_delay_us($UN.cast{uint16}(10000000))
+  val () = os_delay_us($UN.cast{uint16}(100000000))
   val _  = system_os_post($UN.cast{uint8}(user_procTaskPrio), 0U, 0U)
 }
 
-%{$
-#define user_procTaskPrio        0
-#define user_procTaskQueueLen    1
-os_event_t user_procTaskQueue[user_procTaskQueueLen];
-
-//Main code function
-static void loop(os_event_t *events);
-static void ICACHE_FLASH_ATTR
-loop(os_event_t *events)
-{
-    loop_ats(events);
+extern fun user_init_ats (): void = "mac#"
+implement user_init_ats () = {
+  (* Start os task *)
+  val _ = system_os_task (loop, $UN.cast{uint8}(user_procTaskPrio), user_procTaskQueue, user_procTaskQueueLen)
+  val _ = system_os_post ($UN.cast{uint8}(user_procTaskPrio), 0U, 0U)
 }
 
+%{$
 //Init function 
 void ICACHE_FLASH_ATTR
 user_init()
@@ -43,9 +45,6 @@ user_init()
     os_memcpy(&stationConf.password, password, 64);
     wifi_station_set_config(&stationConf);
 
-    //Start os task
-    system_os_task(loop, user_procTaskPrio,user_procTaskQueue, user_procTaskQueueLen);
-
-    system_os_post(user_procTaskPrio, 0, 0 );
+    user_init_ats();
 }
 %}

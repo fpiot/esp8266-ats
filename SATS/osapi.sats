@@ -6,6 +6,7 @@
 typedef  os_signal_t = uint
 typedef  os_param_t  = uint
 abst@ype os_event_t  = $extype"os_event_t"
+typedef  os_task_t   = cPtr0(os_event_t) -> void
 abst@ype os_timer_t  = $extype"os_timer_t"
 typedef  os_timer_func_t = ptr -> void
 
