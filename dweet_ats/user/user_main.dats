@@ -5,10 +5,7 @@ staload "{$ESP8266}/SATS/user_interface.sats"
 extern fun user_rf_pre_init (): void = "mac#"
 implement user_rf_pre_init () = ()
 
-extern fun wifi_callback: wifi_event_handler_cb_t = "mac#"
-
 %{
-#include "ip_addr.h"
 #include "espconn.h"
 
 
@@ -88,7 +85,7 @@ void dns_done( const char *name, ip_addr_t *ipaddr, void *arg )
 }
 
 
-void wifi_callback( System_Event_t *evt )
+void wifi_callback_c( System_Event_t *evt )
 {
     os_printf( "%s: %d\n", __FUNCTION__, evt->event );
     
@@ -133,10 +130,14 @@ void wifi_callback( System_Event_t *evt )
 }
 %}
 
+extern fun wifi_callback_c: wifi_event_handler_cb_t = "mac#"
+extern fun wifi_callback: wifi_event_handler_cb_t
+fun wifi_callback (evt) = wifi_callback_c evt
+
 extern fun user_init (): void = "mac#"
 implement user_init () = {
   val () = uart_div_modify (0, UART_CLK_FREQ / 115200)
-  val () = println! "user_init()"
+  val () = println! "\nuser_init()"
 
   val _  = wifi_station_set_hostname "dweet"
   val _  = wifi_set_opmode_current STATION_MODE
