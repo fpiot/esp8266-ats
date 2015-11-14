@@ -29,7 +29,13 @@ extern fun dns_done_c: dns_found_callback_t = "mac#"
 extern fun dns_done: dns_found_callback_t = "mac#"
 implement dns_done (pfat | name, ipaddr, arg) = {
   val () = println! "dns_done()"
-  val () = dns_done_c (pfat | name, ipaddr, arg)
+  val () = if ipaddr = the_null_ptr then {
+             val () = println! "DNS lookup failed"
+             val _  = wifi_station_disconnect ()
+           } else {
+             val () = println! "Connecting..."
+             val () = dns_done_c (pfat | name, ipaddr, arg)
+           }
 }
 
 extern fun wifi_callback_c: wifi_event_handler_cb_t = "mac#"
@@ -79,27 +85,17 @@ void dns_done_c( const char *name, ip_addr_t *ipaddr, void *arg )
 {
     struct espconn *conn = arg;
     
-    if ( ipaddr == NULL) 
-    {
-        os_printf("DNS lookup failed\n");
-        wifi_station_disconnect();
-    }
-    else
-    {
-        os_printf("Connecting...\n" );
-        
-        conn->type = ESPCONN_TCP;
-        conn->state = ESPCONN_NONE;
-        conn->proto.tcp=&dweet_tcp;
-        conn->proto.tcp->local_port = espconn_port();
-        conn->proto.tcp->remote_port = 80;
-        os_memcpy( conn->proto.tcp->remote_ip, &ipaddr->addr, 4 );
+    conn->type = ESPCONN_TCP;
+    conn->state = ESPCONN_NONE;
+    conn->proto.tcp=&dweet_tcp;
+    conn->proto.tcp->local_port = espconn_port();
+    conn->proto.tcp->remote_port = 80;
+    os_memcpy( conn->proto.tcp->remote_ip, &ipaddr->addr, 4 );
 
-        espconn_regist_connectcb( conn, tcp_connected );
-        espconn_regist_disconcb( conn, tcp_disconnected );
-        
-        espconn_connect( conn );
-    }
+    espconn_regist_connectcb( conn, tcp_connected );
+    espconn_regist_disconcb( conn, tcp_disconnected );
+    
+    espconn_connect( conn );
 }
 
 
