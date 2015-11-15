@@ -5,9 +5,10 @@ staload "{$ESP8266}/SATS/espconn.sats"
 staload UN = "prelude/SATS/unsafe.sats"
 
 %{^
-void dns_done_c( const char *name, ip_addr_t *ipaddr, void *arg );
+void tcp_connected( void *arg );
 void wifi_callback_c( System_Event_t *evt );
 %}
+extern fun tcp_connected (ptr): void = "mac#"
 
 extern fun user_rf_pre_init (): void = "mac#"
 implement user_rf_pre_init () = ()
@@ -19,7 +20,7 @@ implement data_received (arg, pdata, len) = {
   val _  = espconn_disconnect conn
 }
 
-extern fun tcp_disconnected: espconn_connect_callback_t = "mac#"
+extern fun tcp_disconnected: espconn_connect_callback_t
 implement tcp_disconnected (arg) = {
   val () = println! "tcp_disconnected()"
   val _  = wifi_station_disconnect()
@@ -27,7 +28,6 @@ implement tcp_disconnected (arg) = {
 
 var dweet_tcp: esp_tcp // xxx should be local
 
-extern fun dns_done_c: dns_found_callback_t = "mac#"
 extern fun dns_done: dns_found_callback_t = "mac#"
 implement dns_done (pfat | name, ipaddr, arg) = {
   extern fun os_memcpy (ptr, ptr, int): void = "mac#" // xxx unsafe
@@ -37,6 +37,7 @@ implement dns_done (pfat | name, ipaddr, arg) = {
              val _  = wifi_station_disconnect ()
            } else {
              val () = println! "Connecting..."
+
              val (pfat_conn, pfback_conn | conn) = $UN.ptr_vtake{espconn_t}(arg)
              val () = conn->type := ESPCONN_TCP
              val () = conn->state := ESPCONN_NONE
@@ -47,7 +48,11 @@ implement dns_done (pfat | name, ipaddr, arg) = {
              prval () = pfback_tcp pfat_tcp
              val () = conn->proto.tcp := $UN.cast{cPtr0(esp_tcp)}(addr@dweet_tcp)
              prval () = pfback_conn pfat_conn
-             val () = dns_done_c (pfat | name, ipaddr, arg)
+
+             val conn = $UN.cast{cPtr1(espconn_t)}(arg)
+             val _ = espconn_regist_connectcb (conn, tcp_connected)
+             val _ = espconn_regist_disconcb (conn, tcp_disconnected)
+             val _ = espconn_connect conn
            }
 }
 
@@ -70,7 +75,6 @@ implement user_init () = {
 %{$
 struct espconn dweet_conn;
 ip_addr_t dweet_ip;
-esp_tcp dweet_tcp;
 
 char dweet_host[] = "dweet.io";
 char dweet_path[] = "/dweet/for/eccd882c-33d0-11e5-96b7-10bf4884d1f9";
@@ -92,18 +96,6 @@ void tcp_connected( void *arg )
     os_printf( "Sending: %s\n", buffer );
     espconn_sent( conn, buffer, os_strlen( buffer ) );
 }
-
-
-void dns_done_c( const char *name, ip_addr_t *ipaddr, void *arg )
-{
-    struct espconn *conn = arg;
-    
-    espconn_regist_connectcb( conn, tcp_connected );
-    espconn_regist_disconcb( conn, tcp_disconnected );
-    
-    espconn_connect( conn );
-}
-
 
 void wifi_callback_c( System_Event_t *evt )
 {
