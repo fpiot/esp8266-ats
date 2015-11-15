@@ -7,6 +7,7 @@
 #include "prelude/CATS/char.cats"
 #include "prelude/CATS/integer_ptr.cats"
 #include "prelude/CATS/integer_fixed.cats"
+#include "prelude/CATS/memory.cats"
 #include "prelude/CATS/string.cats"
 #include "prelude/CATS/strptr.cats"
 #include "prelude/CATS/array.cats"
@@ -15,3 +16,4 @@
 
 #include "ESP8266_PRELUDE/CATS/basics.cats"
 #include "ESP8266_PRELUDE/CATS/fprintf.cats"
+#include "ESP8266_PRELUDE/CATS/memalloc.cats"
