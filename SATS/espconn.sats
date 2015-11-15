@@ -1,9 +1,15 @@
-%{#
-#include "ip_addr.h"
-#include "espconn.h"
-%}
 #include "../config.hats"
 staload "{$ESP8266}/SATS/ip_addr.sats"
+
+%{#
+#ifndef ATS_SATS_ESPCONN
+#define ATS_SATS_ESPCONN
+#include "ip_addr.h"
+#include "espconn.h"
+
+#define ats_espconn_gethostbyname(E,H,A,F) espconn_gethostbyname(E,H,A,(dns_found_callback)F)
+#endif // ifndef ATS_SATS_ESPCONN
+%}
 
 typedef err_t = int8
 
@@ -62,4 +68,4 @@ fun espconn_regist_connectcb (espconn: cPtr1(espconn_t), connect_cb: espconn_con
 fun espconn_regist_recvcb (espconn: cPtr1(espconn_t), recv_cb: espconn_recv_callback_t): int8 = "mac#"
 fun espconn_regist_disconcb (espconn: cPtr1(espconn_t), discon_cb: espconn_connect_callback_t): int8 = "mac#"
 fun espconn_port (): int = "mac#"
-fun espconn_gethostbyname (pespconn: cPtr1(espconn_t), hostname: string, addr: cPtr1(ip_addr_t), found: dns_found_callback_t): err_t = "mac#"
+fun espconn_gethostbyname (pespconn: cPtr1(espconn_t), hostname: string, addr: cPtr1(ip_addr_t), found: dns_found_callback_t): err_t = "mac#ats_espconn_gethostbyname"

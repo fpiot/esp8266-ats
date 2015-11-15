@@ -1,13 +1,18 @@
 #include "../config.hats"
 staload "{$ESP8266}/SATS/osapi.sats"
 staload "{$ESP8266}/SATS/user_interface.sats"
+staload "{$ESP8266}/SATS/ip_addr.sats"
 staload "{$ESP8266}/SATS/espconn.sats"
 staload UN = "prelude/SATS/unsafe.sats"
 
 %{^
+char dweet_host[] = "dweet.io";
+char dweet_path[] = "/dweet/for/eccd882c-33d0-11e5-96b7-10bf4884d1f9";
+
 void tcp_connected( void *arg );
-void wifi_callback_c( System_Event_t *evt );
 %}
+extern val dweet_host: string = "mac#"
+extern val dweet_path: string = "mac#"
 extern fun tcp_connected (ptr): void = "mac#"
 
 extern fun user_rf_pre_init (): void = "mac#"
@@ -26,7 +31,7 @@ implement tcp_disconnected (arg) = {
   val _  = wifi_station_disconnect()
 }
 
-extern fun dns_done: dns_found_callback_t = "mac#"
+extern fun dns_done: dns_found_callback_t
 local
   var dweet_tcp: esp_tcp
 in
@@ -58,34 +63,39 @@ in
   }
 end
 
-extern fun wifi_callback_c: wifi_event_handler_cb_t = "mac#"
 extern fun wifi_callback: wifi_event_handler_cb_t
-implement wifi_callback (pfat | evt) = {
-  val () = println! ("wifi_callback(): ", evt->event)
-  val () = case+ 0 of
-           | _ when evt->event = EVENT_STAMODE_CONNECTED => {
-               val ssid_str = $UN.cast{string}(addr@(evt->event_info.connected.ssid))
-               val () = print "connect to ssid "
-               val () = print ssid_str
-               val () = println! (", channel ", evt->event_info.connected.channel)
-             }
-           | _ when evt->event = EVENT_STAMODE_DISCONNECTED => {
-               val ssid_str = $UN.cast{string}(addr@(evt->event_info.disconnected.ssid))
-               val () = print "disconnect to ssid "
-               val () = print ssid_str
-               val () = println! (", reason ", evt->event_info.disconnected.reason)
+local
+  var dweet_conn: espconn_t
+  var dweet_ip: ip_addr_t
+in
+  implement wifi_callback (pfat | evt) = {
+    val () = println! ("wifi_callback(): ", evt->event)
+    val () = case+ 0 of
+             | _ when evt->event = EVENT_STAMODE_CONNECTED => {
+                 val ssid_str = $UN.cast{string}(addr@(evt->event_info.connected.ssid))
+                 val () = print "connect to ssid "
+                 val () = print ssid_str
+                 val () = println! (", channel ", evt->event_info.connected.channel)
+               }
+             | _ when evt->event = EVENT_STAMODE_DISCONNECTED => {
+                 val ssid_str = $UN.cast{string}(addr@(evt->event_info.disconnected.ssid))
+                 val () = print "disconnect to ssid "
+                 val () = print ssid_str
+                 val () = println! (", reason ", evt->event_info.disconnected.reason)
 
-               val _  = system_deep_sleep_set_option ($UN.cast{uint8}(0))
-               val () = system_deep_sleep (60U * 1000U * 1000U) (* 60 seconds *)
-             }
-           | _ when evt->event = EVENT_STAMODE_GOT_IP => {
-               val () = println! ("ip:", evt->event_info.got_ip.ip
-                                 ,",mask:", evt->event_info.got_ip.mask
-                                 ,",gw:", evt->event_info.got_ip.gw)
-               val () = wifi_callback_c (pfat | evt)
-             }
-           | _ => ()
-}
+                 val _  = system_deep_sleep_set_option ($UN.cast{uint8}(0))
+                 val () = system_deep_sleep (60U * 1000U * 1000U) (* 60 seconds *)
+               }
+             | _ when evt->event = EVENT_STAMODE_GOT_IP => {
+                 val () = println! ("ip:", evt->event_info.got_ip.ip
+                                   ,",mask:", evt->event_info.got_ip.mask
+                                   ,",gw:", evt->event_info.got_ip.gw)
+                 val _ = espconn_gethostbyname ($UN.cast{cPtr1(espconn_t)}(addr@dweet_conn), dweet_host,
+                                                $UN.cast{cPtr1(ip_addr_t)}(addr@dweet_ip), dns_done)
+               }
+             | _ => ()
+  }
+end
 
 extern fun user_init (): void = "mac#"
 implement user_init () = {
@@ -100,11 +110,6 @@ implement user_init () = {
 }
 
 %{$
-struct espconn dweet_conn;
-ip_addr_t dweet_ip;
-
-char dweet_host[] = "dweet.io";
-char dweet_path[] = "/dweet/for/eccd882c-33d0-11e5-96b7-10bf4884d1f9";
 char json_data[ 256 ];
 char buffer[ 2048 ];
 
@@ -122,22 +127,5 @@ void tcp_connected( void *arg )
     
     os_printf( "Sending: %s\n", buffer );
     espconn_sent( conn, buffer, os_strlen( buffer ) );
-}
-
-void wifi_callback_c( System_Event_t *evt )
-{
-    switch ( evt->event )
-    {
-        case EVENT_STAMODE_GOT_IP:
-        {
-            espconn_gethostbyname( &dweet_conn, dweet_host, &dweet_ip, (dns_found_callback) dns_done );
-            break;
-        }
-        
-        default:
-        {
-            break;
-        }
-    }
 }
 %}
