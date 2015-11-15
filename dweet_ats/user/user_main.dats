@@ -60,7 +60,29 @@ end
 
 extern fun wifi_callback_c: wifi_event_handler_cb_t = "mac#"
 extern fun wifi_callback: wifi_event_handler_cb_t
-implement wifi_callback (evt) = wifi_callback_c evt
+implement wifi_callback (pfat | evt) = {
+  val () = println! ("wifi_callback(): ", evt->event)
+  val () = case+ 0 of
+           | _ when evt->event = EVENT_STAMODE_CONNECTED => {
+               val ssid_str = $UN.cast{string}(addr@(evt->event_info.connected.ssid))
+               val () = print "connect to ssid "
+               val () = print ssid_str
+               val () = println! (", channel ", evt->event_info.connected.channel)
+             }
+           | _ when evt->event = EVENT_STAMODE_DISCONNECTED => {
+               val ssid_str = $UN.cast{string}(addr@(evt->event_info.disconnected.ssid))
+               val () = print "disconnect to ssid "
+               val () = print ssid_str
+               val () = println! (", reason ", evt->event_info.disconnected.reason)
+
+               val _  = system_deep_sleep_set_option ($UN.cast{uint8}(0))
+               val () = system_deep_sleep (60U * 1000U * 1000U) (* 60 seconds *)
+             }
+           | _ when evt->event = EVENT_STAMODE_GOT_IP => {
+               val () = wifi_callback_c (pfat | evt)
+             }
+           | _ => ()
+}
 
 extern fun user_init (): void = "mac#"
 implement user_init () = {
@@ -101,29 +123,8 @@ void tcp_connected( void *arg )
 
 void wifi_callback_c( System_Event_t *evt )
 {
-    os_printf( "%s: %d\n", __FUNCTION__, evt->event );
-    
     switch ( evt->event )
     {
-        case EVENT_STAMODE_CONNECTED:
-        {
-            os_printf("connect to ssid %s, channel %d\n",
-                        evt->event_info.connected.ssid,
-                        evt->event_info.connected.channel);
-            break;
-        }
-
-        case EVENT_STAMODE_DISCONNECTED:
-        {
-            os_printf("disconnect from ssid %s, reason %d\n",
-                        evt->event_info.disconnected.ssid,
-                        evt->event_info.disconnected.reason);
-            
-            deep_sleep_set_option( 0 );
-            system_deep_sleep( 60 * 1000 * 1000 );  // 60 seconds
-            break;
-        }
-
         case EVENT_STAMODE_GOT_IP:
         {
             os_printf("ip:" IPSTR ",mask:" IPSTR ",gw:" IPSTR,

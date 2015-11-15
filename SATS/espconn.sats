@@ -2,8 +2,8 @@
 #include "ip_addr.h"
 #include "espconn.h"
 %}
-
-typedef ip_addr_t = $extype_struct"ip_addr_t" of { addr= uint32 }
+#include "../config.hats"
+staload "{$ESP8266}/SATS/ip_addr.sats"
 
 typedef espconn_connect_callback_t = (ptr) -> void
 typedef espconn_reconnect_callback_t = (ptr, int8) -> void
