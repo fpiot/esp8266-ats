@@ -9,20 +9,30 @@ staload UN = "prelude/SATS/unsafe.sats"
 char dweet_host[] = "dweet.io";
 char dweet_path[] = "/dweet/for/eccd882c-33d0-11e5-96b7-10bf4884d1f9";
 
-void tcp_connected( void *arg );
+void tcp_connected_c( void *arg );
 %}
 extern val dweet_host: string = "mac#"
 extern val dweet_path: string = "mac#"
-extern fun tcp_connected (ptr): void = "mac#"
 
 extern fun user_rf_pre_init (): void = "mac#"
 implement user_rf_pre_init () = ()
 
-extern fun data_received: espconn_recv_callback_t = "mac#"
+extern fun data_received: espconn_recv_callback_t
 implement data_received (arg, pdata, len) = {
   val conn = $UN.cast{cPtr1(espconn_t)}(arg)
   val () = println! ("data_received(): ", pdata)
   val _  = espconn_disconnect conn
+}
+
+extern fun tcp_connected_c (ptr): void = "mac#"
+extern fun tcp_connected (ptr): void
+implement tcp_connected (arg) = {
+  val temperature = 55 (* test data *)
+  val conn = $UN.cast{cPtr1(espconn_t)}(arg)
+
+  val () = println! "tcp_connected()"
+  val _  = espconn_regist_recvcb (conn, data_received)
+  val () = tcp_connected_c arg
 }
 
 extern fun tcp_disconnected: espconn_connect_callback_t
@@ -113,14 +123,11 @@ implement user_init () = {
 char json_data[ 256 ];
 char buffer[ 2048 ];
 
-void tcp_connected( void *arg )
+void tcp_connected_c( void *arg )
 {
     int temperature = 55;   // test data
     struct espconn *conn = arg;
     
-    os_printf( "%s\n", __FUNCTION__ );
-    espconn_regist_recvcb( conn, (espconn_recv_callback) data_received );
-
     os_sprintf( json_data, "{\"temperature\": \"%d\" }", temperature );
     os_sprintf( buffer, "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: %d\r\n\r\n%s", 
                          dweet_path, dweet_host, os_strlen( json_data ), json_data );
