@@ -25,15 +25,28 @@ implement tcp_disconnected (arg) = {
   val _  = wifi_station_disconnect()
 }
 
+var dweet_tcp: esp_tcp // xxx should be local
+
 extern fun dns_done_c: dns_found_callback_t = "mac#"
 extern fun dns_done: dns_found_callback_t = "mac#"
 implement dns_done (pfat | name, ipaddr, arg) = {
+  extern fun os_memcpy (ptr, ptr, int): void = "mac#" // xxx unsafe
   val () = println! "dns_done()"
   val () = if ipaddr = the_null_ptr then {
              val () = println! "DNS lookup failed"
              val _  = wifi_station_disconnect ()
            } else {
              val () = println! "Connecting..."
+             val (pfat_conn, pfback_conn | conn) = $UN.ptr_vtake{espconn_t}(arg)
+             val () = conn->type := ESPCONN_TCP
+             val () = conn->state := ESPCONN_NONE
+             val (pfat_tcp, pfback_tcp | tcp) = $UN.ptr0_vtake{esp_tcp}(addr@dweet_tcp)
+             val () = tcp->local_port := espconn_port ()
+             val () = tcp->remote_port := 80
+             val () = os_memcpy(addr@(tcp->remote_ip), addr@(ipaddr->addr), 4)
+             prval () = pfback_tcp pfat_tcp
+             val () = conn->proto.tcp := $UN.cast{cPtr0(esp_tcp)}(addr@dweet_tcp)
+             prval () = pfback_conn pfat_conn
              val () = dns_done_c (pfat | name, ipaddr, arg)
            }
 }
@@ -85,13 +98,6 @@ void dns_done_c( const char *name, ip_addr_t *ipaddr, void *arg )
 {
     struct espconn *conn = arg;
     
-    conn->type = ESPCONN_TCP;
-    conn->state = ESPCONN_NONE;
-    conn->proto.tcp=&dweet_tcp;
-    conn->proto.tcp->local_port = espconn_port();
-    conn->proto.tcp->remote_port = 80;
-    os_memcpy( conn->proto.tcp->remote_ip, &ipaddr->addr, 4 );
-
     espconn_regist_connectcb( conn, tcp_connected );
     espconn_regist_disconcb( conn, tcp_disconnected );
     
