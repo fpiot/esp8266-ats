@@ -3,8 +3,11 @@ staload "{$ESP8266}/SATS/osapi.sats"
 staload "{$ESP8266}/SATS/ip_addr.sats"
 
 %{#
+#ifndef ATS_SATS_USER_INTERFACE
+#define ATS_SATS_USER_INTERFACE
 #include "os_type.h"
 #include "user_interface.h"
+
 #define ats_system_os_task(T,P,Q,L) system_os_task((os_task_t)T,P,Q,L)
 #define ats_wifi_set_event_handler_cb(H) wifi_set_event_handler_cb((wifi_event_handler_cb_t)H)
 
@@ -22,6 +25,7 @@ wifi_station_setup(atsvoid_t0ype)
   os_memcpy(&stationConf.password, password, 64);
   return wifi_station_set_config(&stationConf);
 }
+#endif // ifndef ATS_SATS_USER_INTERFACE
 %}
 
 fun system_deep_sleep_set_option (option: uint8): bool = "mac#"

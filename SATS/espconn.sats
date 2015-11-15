@@ -5,6 +5,8 @@
 #include "../config.hats"
 staload "{$ESP8266}/SATS/ip_addr.sats"
 
+typedef err_t = int8
+
 typedef espconn_connect_callback_t = (ptr) -> void
 typedef espconn_reconnect_callback_t = (ptr, int8) -> void
 typedef espconn_recv_callback_t = (ptr, string, int) -> void
@@ -60,3 +62,4 @@ fun espconn_regist_connectcb (espconn: cPtr1(espconn_t), connect_cb: espconn_con
 fun espconn_regist_recvcb (espconn: cPtr1(espconn_t), recv_cb: espconn_recv_callback_t): int8 = "mac#"
 fun espconn_regist_disconcb (espconn: cPtr1(espconn_t), discon_cb: espconn_connect_callback_t): int8 = "mac#"
 fun espconn_port (): int = "mac#"
+fun espconn_gethostbyname (pespconn: cPtr1(espconn_t), hostname: string, addr: cPtr1(ip_addr_t), found: dns_found_callback_t): err_t = "mac#"

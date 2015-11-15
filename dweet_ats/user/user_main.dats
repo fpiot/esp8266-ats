@@ -79,6 +79,9 @@ implement wifi_callback (pfat | evt) = {
                val () = system_deep_sleep (60U * 1000U * 1000U) (* 60 seconds *)
              }
            | _ when evt->event = EVENT_STAMODE_GOT_IP => {
+               val () = println! ("ip:", evt->event_info.got_ip.ip
+                                 ,",mask:", evt->event_info.got_ip.mask
+                                 ,",gw:", evt->event_info.got_ip.gw)
                val () = wifi_callback_c (pfat | evt)
              }
            | _ => ()
@@ -127,12 +130,6 @@ void wifi_callback_c( System_Event_t *evt )
     {
         case EVENT_STAMODE_GOT_IP:
         {
-            os_printf("ip:" IPSTR ",mask:" IPSTR ",gw:" IPSTR,
-                        IP2STR(&evt->event_info.got_ip.ip),
-                        IP2STR(&evt->event_info.got_ip.mask),
-                        IP2STR(&evt->event_info.got_ip.gw));
-            os_printf("\n");
-            
             espconn_gethostbyname( &dweet_conn, dweet_host, &dweet_ip, (dns_found_callback) dns_done );
             break;
         }
