@@ -17,10 +17,8 @@ You need [some additional board](https://www.switch-science.com/catalog/2500/) t
 Install some packages.
 
 ```
-$ sudo apt-get install make unrar autoconf automake libtool gcc g++ gperf flex bison texinfo gawk libncurses5-dev libexpat1-dev python python-serial sed git
+$ sudo apt-get install make unrar autoconf automake libtool gcc g++ gperf flex bison texinfo gawk libncurses5-dev libexpat1-dev python python-serial sed git libgmp-dev
 ```
-
-xxx
 
 ### Mac OS X
 
@@ -31,6 +29,19 @@ T.B.D.
 T.B.D.
 
 ## How to build
+
+Setup toolchain and SDK.
+
+```
+$ git clone --recursive https://github.com/pfalcon/esp-open-sdk.git
+$ cd esp-open-sdk
+$ git submodule update
+$ make STANDALONE=y
+$ export XTENSA_TOOLS_ROOT=`pwd`/xtensa-lx106-elf/bin
+$ export SDK_BASE=`pwd`/sdk
+$ export ESPTOOL=`pwd`/esptool/esptool.py
+$ export ESPPORT=/dev/ttyUSB0
+```
 
 Install ATS2 http://www.ats-lang.org/.
 

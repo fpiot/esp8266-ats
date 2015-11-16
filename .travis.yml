@@ -33,12 +33,14 @@ addons:
     - python-serial
     - sed
     - git
+    - libgmp-dev
 
 before_install:
   # Install a toolchain using esp-open-sdk (parts we need for this are the GNU toolchain and libhal)
   #
   # Adds hack of "{$HAS_TC} || -Buildstep-" to avoid rebuilding toolchain if it's already
   # installed from the cache. If this gets any more complex it should be spun out to a standalone shell script.
+  - cd ${HOME}
   - export HAS_TC="test -d ${CROSS_BINDIR}"
   - unset CC # Travis sets this due to "language: c", but it confuses autotools configure when cross-building
   - ${HAS_TC} || git clone --recursive https://github.com/pfalcon/esp-open-sdk.git
@@ -47,10 +49,21 @@ before_install:
   - ${HAS_TC} || git submodule update
   - ${HAS_TC} || sed -i "s/2.69/2.68/" lx106-hal/configure.ac # this is a nasty hack as Ubuntu Precise only has autoconf 2.68 not 2.69...
   - ${HAS_TC} || sed -r -i 's%TOOLCHAIN ?=.*%TOOLCHAIN=${CROSS_ROOT}%' Makefile
-  - ${HAS_TC} || make STANDALONE=y
-  - ${HAS_TC} || mv *sdk* ${CROSS_ROOT}/
-  - ls ${CROSS_ROOT}
-  - ls ${CROSS_ROOT}/*
+  - ${HAS_TC} || ( make STANDALONE=y && mv *sdk* ${CROSS_ROOT}/ )
+  # Get ATS source code
+  - cd ${HOME}
+  - git clone https://github.com/githwxi/ATS-Postiats.git
+  - git clone https://github.com/githwxi/ATS-Postiats-contrib.git
+  # Build ATS1
+  - export ATSHOME=${HOME}/ats-lang-anairiats-0.2.12
+  - export ATSHOMERELOC=ATS-0.2.12
+  - ${HOME}/ATS-Postiats/travis-ci/ats1_setup.sh 0.2.12
+  - cd ${ATSHOME} && ./configure && make
+  # Build ATS2
+  - export PATSHOME=${HOME}/ATS-Postiats
+  - export PATSHOMERELOC=${HOME}/ATS-Postiats-contrib
+  - export PATH=${PATH}:${PATSHOME}/bin
+  - cd ${PATSHOME} && make -f codegen/Makefile_atslib && make -f Makefile_devl src_depend && make -f Makefile_devl all
 
 script:
   - cd ${TRAVIS_BUILD_DIR}
