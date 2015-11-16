@@ -49,7 +49,7 @@ before_install:
   - ${HAS_TC} || git submodule update
   - ${HAS_TC} || sed -i "s/2.69/2.68/" lx106-hal/configure.ac # this is a nasty hack as Ubuntu Precise only has autoconf 2.68 not 2.69...
   - ${HAS_TC} || sed -r -i 's%TOOLCHAIN ?=.*%TOOLCHAIN=${CROSS_ROOT}%' Makefile
-  - ${HAS_TC} || make STANDALONE=y && mv *sdk* ${CROSS_ROOT}/
+  - ${HAS_TC} || ( make STANDALONE=y && mv *sdk* ${CROSS_ROOT}/ )
   # Get ATS source code
   - cd ${HOME}
   - git clone https://github.com/githwxi/ATS-Postiats.git
