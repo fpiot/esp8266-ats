@@ -65,6 +65,7 @@ typedef espconn_t = $extype_struct"struct espconn" of {
 
 fun espconn_connect (espconn: cPtr1(espconn_t)): int8 = "mac#"
 fun espconn_disconnect (espconn: cPtr1(espconn_t)): int8 = "mac#"
+fun espconn_sent (espconn: cPtr1(espconn_t), psent: ptr, length: uint16): int8 = "mac#"
 fun espconn_regist_connectcb (espconn: cPtr1(espconn_t), connect_cb: espconn_connect_callback_t): int8 = "mac#"
 fun espconn_regist_recvcb (espconn: cPtr1(espconn_t), recv_cb: espconn_recv_callback_t): int8 = "mac#ats_espconn_regist_recvcb"
 fun espconn_regist_disconcb (espconn: cPtr1(espconn_t), discon_cb: espconn_connect_callback_t): int8 = "mac#"

@@ -1,13 +1,17 @@
 #include "../config.hats"
+#include "share/atspre_staload.hats"
 staload "{$ESP8266}/SATS/osapi.sats"
 staload "{$ESP8266}/SATS/user_interface.sats"
 staload "{$ESP8266}/SATS/ip_addr.sats"
 staload "{$ESP8266}/SATS/espconn.sats"
 staload UN = "prelude/SATS/unsafe.sats"
 
+staload "{$ESP8266}/SATS/tostring.sats"
+staload _ = "{$ESP8266}/TDATS/tostring.dats"
+
 %{^
 char dweet_host[] = "dweet.io";
-char dweet_path[] = "/dweet/for/eccd882c-33d0-11e5-96b7-10bf4884d1f9";
+char dweet_path[] = DWEET_PATH;
 
 void tcp_connected_c( void *arg );
 %}
@@ -26,14 +30,34 @@ implement data_received (arg, pdata, len) = {
 
 extern fun tcp_connected_c (ptr): void = "mac#"
 extern fun tcp_connected (ptr): void
-implement tcp_connected (arg) = {
-  val temperature = 55 (* test data *)
-  val conn = $UN.cast{cPtr1(espconn_t)}(arg)
+local
+  var buffer: @[char][2048]
+in
+  implement tcp_connected (arg) = {
+    val temperature = 55 (* test data *)
+    val conn = $UN.cast{cPtr1(espconn_t)}(arg)
 
-  val () = println! "tcp_connected()"
-  val _  = espconn_regist_recvcb (conn, data_received)
-  val () = tcp_connected_c arg
-}
+    val () = println! "tcp_connected()"
+    val _  = espconn_regist_recvcb (conn, data_received)
+
+    // xxx need to make JSON library
+    val json_open = string0_copy "{\"temperature\": \""
+    val json_close = string0_copy "\" }"
+    val temp = esp_tostrptr_int temperature
+    val json_head = strptr_append (json_open, temp)
+    val json_data = strptr_append (json_head, json_close)
+    val () = (free json_open; free json_close; free temp; free json_head)
+
+    // xxx need to make JSON-sender function
+    extern fun os_sprint_jsonpost (ptr, string, string, string, ssize_t, !Strptr0): void = "mac#os_sprintf" // xxx unsafe
+    val () = os_sprint_jsonpost (addr@buffer, "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: %d\r\n\r\n%s", dweet_path, dweet_host, length json_data, json_data)
+    val () = println! ("Sending: ", ($UN.cast{string}(addr@buffer)))
+    val () = free json_data
+
+    extern fun os_strlen (ptr): uint16 = "mac#" // xxx unsafe
+    val _ = espconn_sent(conn, addr@buffer, os_strlen(addr@buffer))
+  }
+end
 
 extern fun tcp_disconnected: espconn_connect_callback_t
 implement tcp_disconnected (arg) = {
@@ -118,21 +142,3 @@ implement user_init () = {
   val _  = wifi_station_setup ()
   val () = wifi_set_event_handler_cb wifi_callback
 }
-
-%{$
-char json_data[ 256 ];
-char buffer[ 2048 ];
-
-void tcp_connected_c( void *arg )
-{
-    int temperature = 55;   // test data
-    struct espconn *conn = arg;
-    
-    os_sprintf( json_data, "{\"temperature\": \"%d\" }", temperature );
-    os_sprintf( buffer, "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: %d\r\n\r\n%s", 
-                         dweet_path, dweet_host, os_strlen( json_data ), json_data );
-    
-    os_printf( "Sending: %s\n", buffer );
-    espconn_sent( conn, buffer, os_strlen( buffer ) );
-}
-%}
