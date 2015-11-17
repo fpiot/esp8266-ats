@@ -17,3 +17,4 @@ fun os_timer_arm (ptimer: cPtr1(os_timer_t), ms: uint, repeat_flag: bool): void 
 fun os_timer_disarm (ptimer: cPtr1(os_timer_t)): void = "mac#"
 fun os_timer_setfn (ptimer: cPtr1(os_timer_t), pfunc: os_timer_func_t, parg: ptr): void = "mac#"
 fun uart_div_modify(uart: int, freq: int): void = "mac#"
+fun os_random (): ulint = "mac#"

@@ -34,7 +34,7 @@ local
   var buffer: @[char][2048]
 in
   implement tcp_connected (arg) = {
-    val temperature = 55 (* test data *)
+    val rand = $UN.cast{int}(os_random ())
     val conn = $UN.cast{cPtr1(espconn_t)}(arg)
 
     val () = println! "tcp_connected()"
@@ -43,7 +43,7 @@ in
     // xxx need to make JSON library
     val json_open = string0_copy "{\"value1\": \""
     val json_close = string0_copy "\" }"
-    val temp = esp_tostrptr_int temperature
+    val temp = esp_tostrptr_int rand
     val json_head = strptr_append (json_open, temp)
     val json_data = strptr_append (json_head, json_close)
     val () = (free json_open; free json_close; free temp; free json_head)
