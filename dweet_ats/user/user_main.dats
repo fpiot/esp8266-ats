@@ -21,24 +21,21 @@ extern val dweet_path: string = "mac#"
 extern fun user_rf_pre_init (): void = "mac#"
 implement user_rf_pre_init () = ()
 
-extern fun data_received: espconn_recv_callback_t
-implement data_received (arg, pdata, len) = {
-  val conn = $UN.cast{cPtr1(espconn_t)}(arg)
+extern fun data_received {l:addr} (!espconn_t@l | espconn: ptr l, string, int): void
+implement data_received (pfat | conn, pdata, len) = {
   val () = println! ("data_received(): ", pdata)
-  val _  = espconn_disconnect conn
+  val _  = espconn_disconnect (pfat | conn)
 }
 
-extern fun tcp_connected_c (ptr): void = "mac#"
-extern fun tcp_connected (ptr): void
+extern fun tcp_connected {l:addr} (!espconn_t@l | espconn: ptr l) : void
 local
   var buffer: @[char][2048]
 in
-  implement tcp_connected (arg) = {
+  implement tcp_connected (pfat | conn) = {
     val temperature = 55 (* test data *)
-    val conn = $UN.cast{cPtr1(espconn_t)}(arg)
 
     val () = println! "tcp_connected()"
-    val _  = espconn_regist_recvcb (conn, data_received)
+    val _  = espconn_regist_recvcb (pfat | conn, $UN.cast{espconn_recv_callback_t}(data_received))
 
     // xxx need to make JSON library
     val json_open = string0_copy "{\"temperature\": \""
@@ -55,21 +52,21 @@ in
     val () = free json_data
 
     extern fun os_strlen (ptr): uint16 = "mac#" // xxx unsafe
-    val _ = espconn_sent(conn, addr@buffer, os_strlen(addr@buffer))
+    val _ = espconn_sent(pfat | conn, addr@buffer, os_strlen(addr@buffer))
   }
 end
 
-extern fun tcp_disconnected: espconn_connect_callback_t
-implement tcp_disconnected (arg) = {
+extern fun tcp_disconnected {l:addr} (!espconn_t@l | espconn: ptr l) : void
+implement tcp_disconnected (pfat | conn) = {
   val () = println! "tcp_disconnected()"
   val _  = wifi_station_disconnect()
 }
 
-extern fun dns_done: dns_found_callback_t
+extern fun dns_done: {l1,l2:addr} (!ip_addr_t@l1, !espconn_t@l2 | string, ptr l1, ptr l2) -> void
 local
   var dweet_tcp: esp_tcp
 in
-  implement dns_done (pfat | name, ipaddr, arg) = {
+  implement dns_done (pfat_ip, pfat_conn | name, ipaddr, conn) = {
     extern fun os_memcpy (ptr, ptr, int): void = "mac#" // xxx unsafe
     val () = println! "dns_done()"
     val () = if ipaddr = the_null_ptr then {
@@ -78,7 +75,6 @@ in
              } else {
                val () = println! "Connecting..."
 
-               val (pfat_conn, pfback_conn | conn) = $UN.ptr_vtake{espconn_t}(arg)
                val () = conn->type := ESPCONN_TCP
                val () = conn->state := ESPCONN_NONE
                val (pfat_tcp, pfback_tcp | tcp) = $UN.ptr0_vtake{esp_tcp}(addr@dweet_tcp)
@@ -87,12 +83,10 @@ in
                val () = os_memcpy(addr@(tcp->remote_ip), addr@(ipaddr->addr), 4)
                prval () = pfback_tcp pfat_tcp
                val () = conn->proto.tcp := $UN.cast{cPtr0(esp_tcp)}(addr@dweet_tcp)
-               prval () = pfback_conn pfat_conn
 
-               val conn = $UN.cast{cPtr1(espconn_t)}(arg)
-               val _ = espconn_regist_connectcb (conn, tcp_connected)
-               val _ = espconn_regist_disconcb (conn, tcp_disconnected)
-               val _ = espconn_connect conn
+               val _ = espconn_regist_connectcb (pfat_conn| conn, $UN.cast{espconn_connect_callback_t}(tcp_connected))
+               val _ = espconn_regist_disconcb (pfat_conn | conn, $UN.cast{espconn_connect_callback_t}(tcp_disconnected))
+               val _ = espconn_connect (pfat_conn | conn)
              }
   }
 end
@@ -124,8 +118,11 @@ in
                  val () = println! ("ip:", evt->event_info.got_ip.ip
                                    ,",mask:", evt->event_info.got_ip.mask
                                    ,",gw:", evt->event_info.got_ip.gw)
-                 val _ = espconn_gethostbyname ($UN.cast{cPtr1(espconn_t)}(addr@dweet_conn), dweet_host,
-                                                $UN.cast{cPtr1(ip_addr_t)}(addr@dweet_ip), dns_done)
+                 val (pfat_conn, pfback_conn | conn) = $UN.ptr_vtake{espconn_t}(addr@dweet_conn)
+                 val _ = espconn_gethostbyname (pfat_conn | conn, dweet_host,
+                                                $UN.cast{cPtr1(ip_addr_t)}(addr@dweet_ip),
+                                                $UN.cast{dns_found_callback_t}(dns_done))
+                 prval () = pfback_conn pfat_conn
                }
              | _ => ()
   }
