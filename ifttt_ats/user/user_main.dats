@@ -25,7 +25,7 @@ extern fun data_received: espconn_recv_callback_t
 implement data_received (arg, pdata, len) = {
   val conn = $UN.cast{cPtr1(espconn_t)}(arg)
   val () = println! ("data_received(): ", pdata)
-  val _  = espconn_disconnect conn
+  val _  = espconn_secure_disconnect conn
 }
 
 extern fun tcp_connected_c (ptr): void = "mac#"
@@ -55,7 +55,7 @@ in
     val () = free json_data
 
     extern fun os_strlen (ptr): uint16 = "mac#" // xxx unsafe
-    val _ = espconn_sent(conn, addr@buffer, os_strlen(addr@buffer))
+    val _ = espconn_secure_sent(conn, addr@buffer, os_strlen(addr@buffer))
   }
 end
 
@@ -83,7 +83,7 @@ in
                val () = conn->state := ESPCONN_NONE
                val (pfat_tcp, pfback_tcp | tcp) = $UN.ptr0_vtake{esp_tcp}(addr@ifttt_tcp)
                val () = tcp->local_port := espconn_port ()
-               val () = tcp->remote_port := 80
+               val () = tcp->remote_port := 443
                val () = os_memcpy(addr@(tcp->remote_ip), addr@(ipaddr->addr), 4)
                prval () = pfback_tcp pfat_tcp
                val () = conn->proto.tcp := $UN.cast{cPtr0(esp_tcp)}(addr@ifttt_tcp)
@@ -92,7 +92,8 @@ in
                val conn = $UN.cast{cPtr1(espconn_t)}(arg)
                val _ = espconn_regist_connectcb (conn, tcp_connected)
                val _ = espconn_regist_disconcb (conn, tcp_disconnected)
-               val _ = espconn_connect conn
+               val _ = espconn_secure_set_size (ESPCONN_CLIENT, $UN.cast{uint16}(5120))
+               val _ = espconn_secure_connect conn
              }
   }
 end

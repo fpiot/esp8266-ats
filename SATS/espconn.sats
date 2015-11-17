@@ -63,6 +63,12 @@ typedef espconn_t = $extype_struct"struct espconn" of {
 , reverse  = ptr
 }
 
+macdef ESPCONN_IDLE = $extval(uint8, "ESPCONN_IDLE")
+macdef ESPCONN_CLIENT = $extval(uint8, "ESPCONN_CLIENT")
+macdef ESPCONN_SERVER = $extval(uint8, "ESPCONN_SERVER")
+macdef ESPCONN_BOTH = $extval(uint8, "ESPCONN_BOTH")
+macdef ESPCONN_MAX = $extval(uint8, "ESPCONN_MAX")
+
 fun espconn_connect (espconn: cPtr1(espconn_t)): int8 = "mac#"
 fun espconn_disconnect (espconn: cPtr1(espconn_t)): int8 = "mac#"
 fun espconn_sent (espconn: cPtr1(espconn_t), psent: ptr, length: uint16): int8 = "mac#"
@@ -71,3 +77,7 @@ fun espconn_regist_recvcb (espconn: cPtr1(espconn_t), recv_cb: espconn_recv_call
 fun espconn_regist_disconcb (espconn: cPtr1(espconn_t), discon_cb: espconn_connect_callback_t): int8 = "mac#"
 fun espconn_port (): int = "mac#"
 fun espconn_gethostbyname (pespconn: cPtr1(espconn_t), hostname: string, addr: cPtr1(ip_addr_t), found: dns_found_callback_t): err_t = "mac#ats_espconn_gethostbyname"
+fun espconn_secure_connect (espconn: cPtr1(espconn_t)): int8 = "mac#"
+fun espconn_secure_disconnect (espconn: cPtr1(espconn_t)): int8 = "mac#"
+fun espconn_secure_sent (espconn: cPtr1(espconn_t), psent: ptr, length: uint16): int8 = "mac#"
+fun espconn_secure_set_size (level: uint8, size: uint16): bool = "mac#"
