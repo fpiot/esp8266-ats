@@ -1,3 +1,3 @@
-#define SSID "at_STARBUCKS_Wi2"
+#define SSID "Hands_FreeSpot"
 #define SSID_PASSWORD ""
-#define DWEET_PATH "/dweet/for/eccd882c-33d0-11e5-96b7-10bf4884d1f9"
+#define IFTTT_PATH "/trigger/esp8266/with/key/QP4pOVEmPtsObcT_UewYf"

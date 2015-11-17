@@ -10,13 +10,13 @@ staload "{$ESP8266}/SATS/tostring.sats"
 staload _ = "{$ESP8266}/TDATS/tostring.dats"
 
 %{^
-char dweet_host[] = "dweet.io";
-char dweet_path[] = DWEET_PATH;
+char ifttt_host[] = "maker.ifttt.com";
+char ifttt_path[] = IFTTT_PATH;
 
 void tcp_connected_c( void *arg );
 %}
-extern val dweet_host: string = "mac#"
-extern val dweet_path: string = "mac#"
+extern val ifttt_host: string = "mac#"
+extern val ifttt_path: string = "mac#"
 
 extern fun user_rf_pre_init (): void = "mac#"
 implement user_rf_pre_init () = ()
@@ -41,7 +41,7 @@ in
     val _  = espconn_regist_recvcb (conn, data_received)
 
     // xxx need to make JSON library
-    val json_open = string0_copy "{\"temperature\": \""
+    val json_open = string0_copy "{\"value1\": \""
     val json_close = string0_copy "\" }"
     val temp = esp_tostrptr_int temperature
     val json_head = strptr_append (json_open, temp)
@@ -50,7 +50,7 @@ in
 
     // xxx need to make JSON-sender function
     extern fun os_sprint_jsonpost (ptr, string, string, string, ssize_t, !Strptr0): void = "mac#os_sprintf" // xxx unsafe
-    val () = os_sprint_jsonpost (addr@buffer, "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: %d\r\n\r\n%s", dweet_path, dweet_host, length json_data, json_data)
+    val () = os_sprint_jsonpost (addr@buffer, "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: %d\r\n\r\n%s", ifttt_path, ifttt_host, length json_data, json_data)
     val () = println! ("Sending: ", ($UN.cast{string}(addr@buffer)))
     val () = free json_data
 
@@ -67,7 +67,7 @@ implement tcp_disconnected (arg) = {
 
 extern fun dns_done: dns_found_callback_t
 local
-  var dweet_tcp: esp_tcp
+  var ifttt_tcp: esp_tcp
 in
   implement dns_done (pfat | name, ipaddr, arg) = {
     extern fun os_memcpy (ptr, ptr, int): void = "mac#" // xxx unsafe
@@ -81,12 +81,12 @@ in
                val (pfat_conn, pfback_conn | conn) = $UN.ptr_vtake{espconn_t}(arg)
                val () = conn->type := ESPCONN_TCP
                val () = conn->state := ESPCONN_NONE
-               val (pfat_tcp, pfback_tcp | tcp) = $UN.ptr0_vtake{esp_tcp}(addr@dweet_tcp)
+               val (pfat_tcp, pfback_tcp | tcp) = $UN.ptr0_vtake{esp_tcp}(addr@ifttt_tcp)
                val () = tcp->local_port := espconn_port ()
                val () = tcp->remote_port := 80
                val () = os_memcpy(addr@(tcp->remote_ip), addr@(ipaddr->addr), 4)
                prval () = pfback_tcp pfat_tcp
-               val () = conn->proto.tcp := $UN.cast{cPtr0(esp_tcp)}(addr@dweet_tcp)
+               val () = conn->proto.tcp := $UN.cast{cPtr0(esp_tcp)}(addr@ifttt_tcp)
                prval () = pfback_conn pfat_conn
 
                val conn = $UN.cast{cPtr1(espconn_t)}(arg)
@@ -99,8 +99,8 @@ end
 
 extern fun wifi_callback: wifi_event_handler_cb_t
 local
-  var dweet_conn: espconn_t
-  var dweet_ip: ip_addr_t
+  var ifttt_conn: espconn_t
+  var ifttt_ip: ip_addr_t
 in
   implement wifi_callback (pfat | evt) = {
     val () = println! ("wifi_callback(): ", evt->event)
@@ -124,8 +124,8 @@ in
                  val () = println! ("ip:", evt->event_info.got_ip.ip
                                    ,",mask:", evt->event_info.got_ip.mask
                                    ,",gw:", evt->event_info.got_ip.gw)
-                 val _ = espconn_gethostbyname ($UN.cast{cPtr1(espconn_t)}(addr@dweet_conn), dweet_host,
-                                                $UN.cast{cPtr1(ip_addr_t)}(addr@dweet_ip), dns_done)
+                 val _ = espconn_gethostbyname ($UN.cast{cPtr1(espconn_t)}(addr@ifttt_conn), ifttt_host,
+                                                $UN.cast{cPtr1(ip_addr_t)}(addr@ifttt_ip), dns_done)
                }
              | _ => ()
   }
@@ -136,7 +136,7 @@ implement user_init () = {
   val () = uart_div_modify (0, UART_CLK_FREQ / 115200)
   val () = println! "\nuser_init()"
 
-  val _  = wifi_station_set_hostname "dweet"
+  val _  = wifi_station_set_hostname "ifttt"
   val _  = wifi_set_opmode_current STATION_MODE
 
   val _  = wifi_station_setup ()
