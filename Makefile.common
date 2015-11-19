@@ -108,7 +108,7 @@ $1/%_dats.c: %.dats
 	$(Q) $(ATS) -o $$@.tmp -d $$<
 	$(Q) cp $$@.tmp $$@
 
-$1/%_dats.o: $1/%_dats.c
+$1/%.o: $1/%.c
 	$(vecho) "CC $$<"
 	$(Q) $(CC) $(INCDIR) $(MODULE_INCDIR) $(EXTRA_INCDIR) $(SDK_INCDIR) $(CFLAGS) -c $$< -o $$@
 endef

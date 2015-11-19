@@ -12,8 +12,6 @@ staload _ = "{$ESP8266}/TDATS/tostring.dats"
 %{^
 char dweet_host[] = "dweet.io";
 char dweet_path[] = DWEET_PATH;
-
-void tcp_connected_c( void *arg );
 %}
 extern val dweet_host: string = "mac#"
 extern val dweet_path: string = "mac#"

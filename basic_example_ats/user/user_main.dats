@@ -12,7 +12,7 @@ os_event_t user_procTaskQueue[user_procTaskQueueLen];
 macdef user_procTaskQueue = $extval(cPtr1(os_event_t), "(user_procTaskQueue)")
 macdef user_procTaskQueueLen = $extval(uint8, "user_procTaskQueueLen")
 
-extern fun loop (events: cPtr0(os_event_t)): void = "mac#"
+extern fun loop (events: cPtr0(os_event_t)): void
 implement loop (events) = {
   val () = println! "Hello"
   val () = os_delay_us(10000U)

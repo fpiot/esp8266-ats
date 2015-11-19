@@ -12,8 +12,6 @@ staload _ = "{$ESP8266}/TDATS/tostring.dats"
 %{^
 char ifttt_host[] = "maker.ifttt.com";
 char ifttt_path[] = IFTTT_PATH;
-
-void tcp_connected_c( void *arg );
 %}
 extern val ifttt_host: string = "mac#"
 extern val ifttt_path: string = "mac#"
