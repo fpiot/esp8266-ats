@@ -30,7 +30,7 @@ wifi_station_setup(atsvoid_t0ype)
 
 fun system_deep_sleep_set_option (option: uint8): bool = "mac#"
 fun system_deep_sleep (time_in_us: uint): void = "mac#"
-fun system_os_task (task: os_task_t, prio: uint8, queue: cPtr1(os_event_t), qlen: uint8): bool = "mac#ats_system_os_task"
+fun system_os_task (task: os_task_t, prio: uint8, queue: ptr, qlen: uint8): bool = "mac#ats_system_os_task"
 fun system_os_post (prio: uint8, sig: os_signal_t, par: os_param_t): bool = "mac#"
 
 macdef NULL_MODE      = $extval(uint8, "NULL_MODE")
