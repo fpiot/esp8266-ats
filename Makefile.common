@@ -76,8 +76,10 @@ BUILD_DIR	:= $(addprefix $(BUILD_BASE)/,$(MODULES))
 SDK_LIBDIR	:= $(addprefix $(SDK_BASE)/,$(SDK_LIBDIR))
 SDK_INCDIR	:= $(addprefix -I$(SDK_BASE)/,$(SDK_INCDIR))
 
-SRC		:= $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.dats))
-OBJ		:= $(patsubst %.dats,$(BUILD_BASE)/%_dats.o,$(SRC))
+SRC_ATS		:= $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.dats))
+OBJ_ATS		:= $(patsubst %.dats,$(BUILD_BASE)/%_dats.o,$(SRC_ATS))
+SRC_C		:= $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.c))
+OBJ_C		:= $(patsubst %.c,$(BUILD_BASE)/%.o,$(SRC_C))
 LIBS		:= $(addprefix -l,$(LIBS))
 APP_AR		:= $(addprefix $(BUILD_BASE)/,$(TARGET)_app.a)
 TARGET_OUT	:= $(addprefix $(BUILD_BASE)/,$(TARGET).out)
@@ -101,6 +103,7 @@ vecho := @echo
 endif
 
 vpath %.dats $(SRC_DIR)
+vpath %.c $(SRC_DIR)
 
 define compile-objects
 $1/%_dats.c: %.dats
@@ -108,7 +111,11 @@ $1/%_dats.c: %.dats
 	$(Q) $(ATS) -o $$@.tmp -d $$<
 	$(Q) cp $$@.tmp $$@
 
-$1/%.o: $1/%.c
+$1/%_dats.o: $1/%_dats.c
+	$(vecho) "CC $$<"
+	$(Q) $(CC) $(INCDIR) $(MODULE_INCDIR) $(EXTRA_INCDIR) $(SDK_INCDIR) $(CFLAGS) -c $$< -o $$@
+
+$1/%.o: %.c
 	$(vecho) "CC $$<"
 	$(Q) $(CC) $(INCDIR) $(MODULE_INCDIR) $(EXTRA_INCDIR) $(SDK_INCDIR) $(CFLAGS) -c $$< -o $$@
 endef
@@ -125,7 +132,7 @@ $(TARGET_OUT): $(APP_AR)
 	$(vecho) "LD $@"
 	$(Q) $(LD) -L$(SDK_LIBDIR) $(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $(LIBS) $(APP_AR) -Wl,--end-group -o $@
 
-$(APP_AR): $(OBJ)
+$(APP_AR): $(OBJ_ATS) $(OBJ_C)
 	$(vecho) "AR $@"
 	$(Q) $(AR) cru $@ $^
 
